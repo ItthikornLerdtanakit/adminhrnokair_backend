@@ -1,0 +1,25 @@
+import db from './connectdatabase.js';
+
+// ลบแอพพลิเคชั่นออก
+export const delete_application = async (item) => {
+    const { app_id } = item;
+    const remove = 'delete from applications where application_id = ?';
+    const [result] = await db.connectdatabase.query(remove, [app_id]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// ลบพนักงานออก
+export const delete_employee = async (item) => {
+    const { emp_id } = item;
+    const remove = 'delete from employees where employee_id = ?';
+    const [result] = db.connectdatabase.query(remove, [emp_id]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
