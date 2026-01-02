@@ -10,7 +10,7 @@ import path from 'node:path';
 import { check_permission, get_department, get_employee, get_group, get_application, get_emailconfig, get_emailtemplate, get_event } from './component/select.js';
 import { save_group, save_application, add_employee, add_employee_import, save_department, save_emailtemplate, save_event } from './component/insert.js';
 import { update_application_select, update_application, update_employee, update_move_department, update_department, update_emailconfig, update_emailtemplate, update_event } from './component/update.js';
-import { delete_application, delete_employee } from './component/delete.js';
+import { delete_application, delete_employee, delete_event } from './component/delete.js';
 
 const now = new Date();
 const pad = n => n.toString().padStart(2, '0');
@@ -314,7 +314,17 @@ app.post(process.env.MANAGE_EVENT, async (req, res) => {
     } catch (error) {
         console.error(error);
     }
-})
+});
+
+// ลบข้อมูล Event
+app.delete(process.env.DELETE_EVENT, async (req, res) => {
+    try {
+        const result = await delete_event(req.query);
+        res.send(result);
+    } catch (error) {
+        console.error(error);
+    }
+});
 
 // -------------------------
 // LISTEN

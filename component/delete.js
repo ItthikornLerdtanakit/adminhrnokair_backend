@@ -23,3 +23,15 @@ export const delete_employee = async (item) => {
         return 'fail';
     }
 }
+
+// ลบ Event ออก
+export const delete_event = async (item) => {
+    const { event_id } = item;
+    const remove = 'delete from events where event_id = ?';
+    const [result] = await db.connectdatabase_pmssystem.query(remove, [event_id]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
