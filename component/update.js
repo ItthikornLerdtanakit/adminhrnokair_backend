@@ -1,4 +1,5 @@
 import db from './connectdatabase.js';
+import { statusdatecalculatepms } from './functions.js';
 
 // อัพเดทแอพพลิเคชั่นโดยเปลี่ยนกลุ่มผู้ใช้งานและสถานะได้เลยโดยไม่ต้องกดบันทึก
 export const update_application_select = async (item) => {
@@ -89,6 +90,18 @@ export const update_emailtemplate = async (item) => {
     const { data } = item;
     const update = 'update emailtemplates set emailtemplate_name = ?, emailtemplate_subject = ?, emailtemplate_description = ? where emailtemplate_id = ?';
     const [result] = await db.connectdatabase.query(update, [data[0].emailtemplate_name, data[0].emailtemplate_subject, data[0].emailtemplate_description, data[0].emailtemplate_id]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// อัพเดท Event ของการประเมินพนักงานภายในบริษัท
+export const update_event = async (item) => {
+    const { id, topic, description, evaluate, startdate, enddate } = item;
+    const update = 'update events set event_topic = ?, event_description = ?, event_evaluate = ?, event_startdate = ?, event_enddate = ?, event_statusdate = ? where event_id = ?';
+    const [result] = await db.connectdatabase_pmssystem.query(update, [topic, description, evaluate, startdate, enddate, statusdatecalculatepms(startdate), id]);
     if (result.affectedRows > 0) {
         return 'success';
     } else {

@@ -7,9 +7,9 @@ import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { check_permission, get_department, get_employee, get_group, get_application, get_emailconfig, get_emailtemplate } from './component/select.js';
-import { save_group, save_application, add_employee, add_employee_import, save_department, save_emailtemplate } from './component/insert.js';
-import { update_application_select, update_application, update_employee, update_move_department, update_department, update_emailconfig, update_emailtemplate } from './component/update.js';
+import { check_permission, get_department, get_employee, get_group, get_application, get_emailconfig, get_emailtemplate, get_event } from './component/select.js';
+import { save_group, save_application, add_employee, add_employee_import, save_department, save_emailtemplate, save_event } from './component/insert.js';
+import { update_application_select, update_application, update_employee, update_move_department, update_department, update_emailconfig, update_emailtemplate, update_event } from './component/update.js';
 import { delete_application, delete_employee } from './component/delete.js';
 
 const now = new Date();
@@ -290,6 +290,31 @@ app.put(process.env.UPDATE_EMAILTEMPLATE, async (req, res) => {
         console.error(error);
     }
 });
+
+// ดึงข้อมูล Event ของการประเมินพนักงานภายในบริษัท
+app.get(process.env.GET_EVENT, async (_, res) => {
+    try {
+        const result = await get_event();
+        res.send(result);
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+// จัดการข้อมูล Event ของการประเมินพนักงานภายในบริษัท
+app.post(process.env.MANAGE_EVENT, async (req, res) => {
+    try {
+        if (req.body.statussave === 'insert') {
+            const result = await save_event(req.body);
+            res.send(result);
+        } else if (req.body.statussave === 'update') {
+            const result = await update_event(req.body);
+            res.send(result);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+})
 
 // -------------------------
 // LISTEN

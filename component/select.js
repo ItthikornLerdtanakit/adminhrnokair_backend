@@ -65,3 +65,17 @@ export const get_emailtemplate = async () => {
     const [result] = await db.connectdatabase.query(select);
     return result;
 }
+
+// ดึงข้อมูล Event ของการประเมินพนักงานภายในบริษัท
+export const get_event = async () => {
+    const select = 'select * from events';
+    const [result] = await db.connectdatabase_pmssystem.query(select);
+    const resultformatdate = await Promise.all(result.map(async item => {
+        return {
+            ...item,
+            event_startdate: moment.utc(item.event_startdate).tz('Asia/Bangkok').format('DD/MM/YYYY'),
+            event_enddate: moment.utc(item.event_enddate).tz('Asia/Bangkok').format('DD/MM/YYYY')
+        };
+    }));
+    return resultformatdate;
+}

@@ -1,4 +1,5 @@
 import db from './connectdatabase.js';
+import { statusdatecalculatepms } from './functions.js';
 
 // บันทึกกลุ่มการใช้งาน
 export const save_group = async (item) => {
@@ -82,6 +83,18 @@ export const save_emailtemplate = async (item) => {
     const { data } = item;
     const insert = 'insert into emailtemplates (emailtemplate_name, emailtemplate_subject, emailtemplate_description) values (?, ?, ?)';
     const [result_insert] = await db.connectdatabase.query(insert, [data[0].emailtemplate_name, data[0].emailtemplate_subject, data[0].emailtemplate_description]);
+    if (result_insert.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// บันทึก Event ของการประเมินพนักงานภายในบริษัท
+export const save_event = async (item) => {
+    const { topic, description, evaluate, startdate, enddate } = item;
+    const insert = 'insert into events (event_topic, event_description, event_evaluate, event_startdate, event_enddate, event_statusdate) values (?, ?, ?, ?, ?, ?)';
+    const [result_insert] = await db.connectdatabase_pmssystem.query(insert, [topic, description, evaluate, startdate, enddate, statusdatecalculatepms(startdate)]);
     if (result_insert.affectedRows > 0) {
         return 'success';
     } else {
