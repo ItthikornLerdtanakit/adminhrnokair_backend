@@ -36,9 +36,9 @@ export const save_application = async (item) => {
 
 // เพิ่มข้อมูลพยักงานรายคน
 export const add_employee = async (item, filename) => {
-    const { employee_code, employee_nameen, employee_nameth, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, employee_annotation, employee_startdate } = item;
-    const insert = 'insert into employees (employee_code, employee_nameen, employee_nameth, employee_position, department_id, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, employee_image, employee_annotation, employee_startdate, employee_enddate) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    const [result_insert] = await db.connectdatabase.query(insert, [employee_code, employee_nameen, employee_nameth, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, filename, employee_annotation, employee_startdate, '0000-00-00']);
+    const { employee_code, employee_nameen, employee_nameth, employee_nicknameen, employee_nicknameth, employee_telephone, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, employee_annotation, employee_startdate } = item;
+    const insert = 'insert into employees (employee_code, employee_nameen, employee_nameth, employee_nicknameen, employee_nicknameth, employee_telephone, employee_position, department_id, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, employee_image, employee_annotation, employee_startdate, employee_enddate) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const [result_insert] = await db.connectdatabase.query(insert, [employee_code, employee_nameen, employee_nameth, employee_nicknameen, employee_nicknameth, employee_telephone, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, filename, employee_annotation, employee_startdate, null]);
     if (result_insert.affectedRows > 0) {
         return 'success';
     } else {
@@ -47,24 +47,39 @@ export const add_employee = async (item, filename) => {
 }
 
 // อัพเดทข้อมูลพนักงานด้วยไฟล์ CSV
-export const add_employee_import = async (item) => {
-    const { data } = item;
+export const add_employee_import = async (data) => {
     const ConvertToYYYYMMDD = (dateStr) => {
         const [day, month, year] = dateStr.split('/');
         return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     };
-    const result = data.map(emp => ({ ...emp, employee_startdate: ConvertToYYYYMMDD(emp.employee_startdate) }));
-    const columns = ['employee_code', 'employee_nameen', 'employee_nameth', 'employee_position', 'employee_supervisor', 'department_id', 'employee_usertype', 'employee_email', 'employee_level', 'employee_status', 'employee_image', 'employee_startdate', 'employee_enddate'];
-    const values = result.flatMap(emp => columns.map(col => emp[col]));
-    const placeholders = result.map(() => `(${columns.map(() => '?').join(',')})`).join(',');
-    const insert = `insert into employees (employee_code, employee_nameen, employee_nameth, employee_position, employee_supervisor, department_id, employee_usertype, employee_email, employee_level, employee_status, employee_image, employee_startdate, employee_enddate) values ${placeholders}`;
+    const result = data.map(emp => ({
+        ...emp,
+        department_id: emp.department_id ? Number(emp.department_id) : null,
+        employee_startdate: ConvertToYYYYMMDD(emp.employee_startdate)
+    }));
+    // ดึง employee_code ทั้งหมดจากไฟล์
+    const codes = result.map(emp => emp.employee_code);
+    const [rows] = await db.connectdatabase.query(`SELECT employee_code FROM employees WHERE employee_code IN (?)`, [codes]);
+    const existingCodes = new Set(rows.map(r => r.employee_code));
+    // กรองออกเฉพาะที่ยังไม่มี
+    const filtered = result.filter(emp => !existingCodes.has(emp.employee_code));
+    if (filtered.length === 0) return { status: 'no_new_data', insert_success: 0, insert_old: result.length - filtered.length };
+    const columns = [
+        'employee_code', 'employee_nameen', 'employee_nameth',
+        'employee_nicknameen', 'employee_nicknameth', 'employee_telephone',
+        'employee_position', 'employee_supervisor', 'department_id',
+        'employee_usertype', 'employee_email', 'employee_level',
+        'employee_status', 'employee_image',
+        'employee_startdate', 'employee_enddate'
+    ];
+    const values = filtered.flatMap(emp => columns.map(col => emp[col]));
+    const placeholders = filtered.map(() => `(${columns.map(() => '?').join(',')})`).join(',');
+    const insert = `insert into employees (${columns.join(',')}) values ${placeholders}`;
     const [result_insert] = await db.connectdatabase.query(insert, values);
-    if (result_insert.affectedRows > 0) {
-        return 'success';
-    } else {
-        return 'fail';
-    }
-}
+    return { status: result_insert.affectedRows > 0 ? 'success' : 'fail', insert_success: result_insert.affectedRows, insert_old: result.length - filtered.length };
+};
+
+
 
 // บันทึกแผนก
 export const save_department = async (item) => {
@@ -90,11 +105,35 @@ export const save_emailtemplate = async (item) => {
     }
 }
 
+// บันทึกรายชื่อ Admin Nokintranest
+export const save_admin_nokintranest = async (item) => {
+    const { nokintranest_code, nokintranest_name, nokintranest_position, nokintranest_department } = item;
+    const insert = 'insert into admin_nokintranests (nokintranest_code, nokintranest_name, nokintranest_position, nokintranest_department) values (?, ?, ?, ?)';
+    const [result_insert] = await db.connectdatabase_nokintranest.query(insert, [nokintranest_code, nokintranest_name, nokintranest_position, nokintranest_department]);
+    if (result_insert.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
 // บันทึก Event ของการประเมินพนักงานภายในบริษัท
 export const save_event = async (item) => {
     const { topic, description, evaluate, startdate, enddate } = item;
     const insert = 'insert into events (event_topic, event_description, event_evaluate, event_startdate, event_enddate, event_statusdate) values (?, ?, ?, ?, ?, ?)';
     const [result_insert] = await db.connectdatabase_pmssystem.query(insert, [topic, description, evaluate, startdate, enddate, statusdatecalculatepms(startdate)]);
+    if (result_insert.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// เพิ่มคำถามการประเมิน
+export const save_question_evaluation = async (item) => {
+    const { topic, weight, description, part, level } = item;
+    const insert = 'insert into parts (part_topic, part_weight, part_description, parttype_id, part_level) values (?, ?, ?, ?, ?)';
+    const [result_insert] = await db.connectdatabase_pmssystem.query(insert, [topic, weight, description, part, level]);
     if (result_insert.affectedRows > 0) {
         return 'success';
     } else {

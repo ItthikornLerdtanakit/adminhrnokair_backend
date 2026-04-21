@@ -4,6 +4,7 @@ configDotenv();
 
 const connectdatabase = mysql.createPool({ host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASS, database: process.env.DB_EMPLOYEE, timezone: process.env.DB_TIMEZONE });
 const connectdatabase_pmssystem = mysql.createPool({ host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASS, database: process.env.DB_PMSSYSTEM, timezone: process.env.DB_TIMEZONE });
+const connectdatabase_nokintranest = mysql.createPool({ host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASS, database: process.env.DB_NOKINTRANEST, timezone: process.env.DB_TIMEZONE });
 
 const testDB = async () => {
     try {
@@ -11,6 +12,8 @@ const testDB = async () => {
         console.log('Connection Success | DB: Employee');
         await connectdatabase_pmssystem.query('SELECT 1');
         console.log('Connection Success | DB: PMS System');
+        await connectdatabase_nokintranest.query('SELECT 1');
+        console.log('Connection Success | DB: Nokintranest');
     } catch (err) {
         console.error('Database connection failed:', err.message);
     }
@@ -18,4 +21,4 @@ const testDB = async () => {
 
 testDB();
 
-export default { connectdatabase, connectdatabase_pmssystem };
+export default { connectdatabase, connectdatabase_pmssystem, connectdatabase_nokintranest };

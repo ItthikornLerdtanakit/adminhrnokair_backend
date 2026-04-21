@@ -30,17 +30,46 @@ export const update_application = async (item) => {
     }
 }
 
+export const update_group = async (item) => {
+    const { group_id, group_name, group_employee } = item;
+    const update_group = 'update groups set group_name = ? where group_id = ?';
+    const [result_group] = await db.connectdatabase.query(update_group, [group_name, group_id]);
+    if (result_group.affectedRows > 0) {
+        const remove = 'delete from grouplists where group_id = ?';
+        const [result] = await db.connectdatabase.query(remove, [group_id]);
+        if (result.affectedRows > 0) {
+            const placeholders = group_employee.map(() => '(?, ?)').join(', ');
+            const params = [];
+            for (const emp of group_employee) {
+                params.push(group_id, emp);
+            }
+            const insert_grouplist = `insert into grouplists (group_id, employee_id) values ${placeholders}`;
+            const [result_grouplist] = await db.connectdatabase.query(insert_grouplist, params);
+            if (result_grouplist.affectedRows > 0) {
+                return 'success';
+            } else {
+                return 'fail';
+            }
+        } else {
+            return 'fail';
+        }
+        
+    } else {
+        return 'fail';
+    }
+}
+
 // อัพเดทข้อมูลพนักงาน
 export const update_employee = async (item, filename) => {
-    const { employee_id, employee_code, employee_nameen, employee_nameth, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, employee_annotation, employee_startdate, employee_enddate } = item;
+    const { employee_id, employee_code, employee_nameen, employee_nameth, employee_nicknameen, employee_nicknameth, employee_telephone, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, employee_annotation, employee_startdate, employee_enddate } = item;
     let enddate = '';
     if (employee_status === 'resign') {
         enddate = employee_enddate;
     } else {
         enddate = '0000-00-00';
     }
-    const update = 'update employees set employee_code = ?, employee_nameen = ?, employee_nameth = ?, employee_position = ?, department_id = ?, employee_supervisor = ?, employee_usertype = ?, employee_email = ?, employee_level = ?, employee_status = ?, employee_image = ?, employee_annotation = ?, employee_startdate = ?, employee_enddate = ? where employee_id = ?';
-    const [result] = await db.connectdatabase.query(update, [employee_code, employee_nameen, employee_nameth, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, filename, employee_annotation, employee_startdate, enddate, employee_id]);
+    const update = 'update employees set employee_code = ?, employee_nameen = ?, employee_nameth = ?, employee_nicknameen = ?, employee_nicknameth = ?, employee_telephone = ?, employee_position = ?, department_id = ?, employee_supervisor = ?, employee_usertype = ?, employee_email = ?, employee_level = ?, employee_status = ?, employee_image = ?, employee_annotation = ?, employee_startdate = ?, employee_enddate = ? where employee_id = ?';
+    const [result] = await db.connectdatabase.query(update, [employee_code, employee_nameen, employee_nameth, employee_nicknameen, employee_nicknameth, employee_telephone, employee_position, employee_department, employee_supervisor, employee_usertype, employee_email, employee_level, employee_status, filename, employee_annotation, employee_startdate, enddate, employee_id]);
     if (result.affectedRows > 0) {
         return 'success';
     } else {
@@ -72,7 +101,6 @@ export const update_department = async (item) => {
     }
 }
 
-
 // อัพเดทข้อมูลการตั้งค่า Email Config
 export const update_emailconfig = async (item) => {
     const { data } = item;
@@ -102,6 +130,55 @@ export const update_event = async (item) => {
     const { id, topic, description, evaluate, startdate, enddate } = item;
     const update = 'update events set event_topic = ?, event_description = ?, event_evaluate = ?, event_startdate = ?, event_enddate = ?, event_statusdate = ? where event_id = ?';
     const [result] = await db.connectdatabase_pmssystem.query(update, [topic, description, evaluate, startdate, enddate, statusdatecalculatepms(startdate), id]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// อัพเดทเปิด-ปิดการประเมิน
+export const update_switch_evaluation = async (item) => {
+    const { part, level, check } = item;
+    let update = '';
+    if (level === 'level_1') {
+        update = 'update parttypes set parttype_statusstaff = ? where parttype_id = ?';
+    } else if (level === 'level_2') {
+        update = 'update parttypes set parttype_statusmanager = ? where parttype_id = ?';
+    } else if (level === 'level_3') {
+        update = 'update parttypes set parttype_statusheadof = ? where parttype_id = ?';
+    }
+    const [result] = await db.connectdatabase_pmssystem.query(update, [check, part]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// อัพเดทชื่อไฟล์ไปยัง Parttype
+export const update_filename_parttype = async (part, level, filename) => {
+    let update = '';
+    if (level === 'level_1') {
+        update = 'update parttypes set parttype_filestaff = ? where parttype_id = ?';
+    } else if (level === 'level_2') {
+        update = 'update parttypes set parttype_filemanager = ? where parttype_id = ?';
+    } else if (level === 'level_3') {
+        update = 'update parttypes set parttype_fileheadof = ? where parttype_id = ?';
+    }
+    const [result] = await db.connectdatabase_pmssystem.query(update, [filename, part]);
+    if (result.affectedRows > 0) {
+        return 'success';
+    } else {
+        return 'fail';
+    }
+}
+
+// อัพเดทคำถามการประเมิน
+export const update_question_evaluation = async (item) => {
+    const { id, topic, weight, description } = item;
+    const update = 'update parts set part_topic = ?, part_weight = ?, part_description = ? where part_id = ?';
+    const [result] = await db.connectdatabase_pmssystem.query(update, [topic, weight, description, id]);
     if (result.affectedRows > 0) {
         return 'success';
     } else {
